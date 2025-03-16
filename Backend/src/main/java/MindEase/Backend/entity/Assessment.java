@@ -1,21 +1,22 @@
 package MindEase.Backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import java.time.LocalDate;
 
 @Entity
 public class Assessment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String assessmentType;
     private int score;
     private String riskLevel;
-    private LocalDate followUpDate;
+    private String followUpDate;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore // Prevents infinite recursion
     private User user;
 
     // Getters and Setters
@@ -51,11 +52,11 @@ public class Assessment {
         this.riskLevel = riskLevel;
     }
 
-    public LocalDate getFollowUpDate() {
+    public String getFollowUpDate() {
         return followUpDate;
     }
 
-    public void setFollowUpDate(LocalDate followUpDate) {
+    public void setFollowUpDate(String followUpDate) {
         this.followUpDate = followUpDate;
     }
 
@@ -66,5 +67,4 @@ public class Assessment {
     public void setUser(User user) {
         this.user = user;
     }
-
 }

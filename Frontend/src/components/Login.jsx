@@ -17,7 +17,10 @@ const Login = () => {
       });
 
       // Store userId in localStorage
-      localStorage.setItem('userId', response.data.userId);
+      const userId = response.data?.user?.id;
+      console.log(response.data);
+      console.log(userId);
+      localStorage.setItem('userId', userId);
 
       // Redirect to the dashboard or home page
       navigate('/dashboard');

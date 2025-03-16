@@ -17,9 +17,13 @@ public class AssessmentController {
 
     // ✅ Accept userId as a query parameter
     @PostMapping
-    public ResponseEntity<Assessment> saveAssessment(@RequestBody Assessment assessment) {
-        Assessment savedAssessment = assessmentService.saveAssessment(assessment);
-        return ResponseEntity.ok(savedAssessment);
+    public ResponseEntity<?> saveAssessment(@RequestBody Assessment assessment, @RequestParam Long userId) {
+        try {
+            Assessment savedAssessment = assessmentService.saveAssessment(assessment, userId);
+            return ResponseEntity.ok(savedAssessment);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(400).body("Error: " + e.getMessage());
+        }
     }
 
     @GetMapping("/user/{userId}")

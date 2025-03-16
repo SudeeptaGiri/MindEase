@@ -6,6 +6,7 @@ const Dashboard = () => {
   const [assessments, setAssessments] = useState([]);
 
   useEffect(() => {
+    console.log(localStorage.getItem('userId'));
     const fetchAssessments = async () => {
       try {
         const response = await axios.get(

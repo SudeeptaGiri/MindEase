@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import axios from 'axios';
 
 const Assessment = () => {
   const [assessmentType, setAssessmentType] = useState('');
   const [answers, setAnswers] = useState({});
   const navigate = useNavigate();
 
-  // Questions for PHQ-9 and GAD-7
   const questions = {
     'PHQ-9': [
       'Little interest or pleasure in doing things?',
@@ -31,35 +29,62 @@ const Assessment = () => {
     ],
   };
 
-  // Handle assessment type selection
   const handleAssessmentTypeChange = (e) => {
     setAssessmentType(e.target.value);
-    setAnswers({}); // Reset answers
+    setAnswers({});
   };
 
-  // Handle answer selection
   const handleAnswer = (questionId, value) => {
     setAnswers({ ...answers, [questionId]: value });
   };
 
-  // Calculate total score and redirect to results page
-  const calculateScore = () => {
+  const calculateScore = async () => {
     const totalScore = Object.values(answers).reduce((sum, value) => sum + value, 0);
     const riskLevel = determineRiskLevel(totalScore);
     const followUpDate = scheduleFollowUp();
 
-    // Redirect to results page with data
-    navigate('/results', {
-      state: {
-        score: totalScore,
-        riskLevel,
-        assessmentType,
-        followUpDate,
-      },
-    });
+    const assessmentData = {
+      assessmentType,
+      score: totalScore,
+      riskLevel,
+      followUpDate,
+    };
+    const userId = localStorage.getItem('userId');
+
+    try {
+      console.log(assessmentData);
+      await saveAssessmentToBackend(assessmentData,userId);
+      navigate('/results', {
+        state: {
+          score: totalScore,
+          riskLevel,
+          assessmentType,
+          followUpDate,
+        },
+      });
+    } catch (error) {
+      console.error('Error saving assessment:', error);
+      alert('Failed to save assessment. Please try again.');
+    }
   };
 
-  // Determine risk level based on score
+  const saveAssessmentToBackend = async (data, userId) => {
+  const response = await fetch(`http://localhost:8080/api/assessments?userId=${userId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to save assessment');
+  }
+
+  return response.json();
+};
+
+
   const determineRiskLevel = (totalScore) => {
     if (assessmentType === 'PHQ-9') {
       if (totalScore >= 20) return 'Severe Depression';
@@ -75,11 +100,10 @@ const Assessment = () => {
     }
   };
 
-  // Schedule follow-up in 2 weeks
   const scheduleFollowUp = () => {
     const today = new Date();
-    const followUp = new Date(today.setDate(today.getDate() + 14)); // 2 weeks later
-    return followUp.toDateString();
+    const followUp = new Date(today.setDate(today.getDate() + 14));
+    return followUp.toISOString().split('T')[0]; // Store in YYYY-MM-DD format
   };
 
   return (
