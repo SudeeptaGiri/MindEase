@@ -1,37 +1,33 @@
 package MindEase.Backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 
 @Entity
-public class Assessment {
-
+public class AnxietyAssessment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @Column(name = "Assessment_type")
-//    private String assessmentType;
-
-    @Column(name = "score")
+    @Column(name="score")
     private int score;
 
     @Column(name = "risk_level")
     private String riskLevel;
 
-    @Column(name = "Date")
+    @Column(name="Date")
     private String followUpDate;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
 
 }
