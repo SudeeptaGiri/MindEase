@@ -9,6 +9,7 @@ import Helpline from './components/Helpline';
 import FollowUp from './components/FollowUp';
 import Header from './components/Header';
 import Footer from './components/Footer';
+import Todo from './components/Todo';
 import './styles/App.css';
 
 const App = () => {
@@ -21,24 +22,40 @@ const App = () => {
 
 const AppContent = () => {
   const location = useLocation();
-  const hideHeaderRoutes = ['/login', '/register','/'];
+  const hideHeaderRoutes = ['/login', '/register', '/'];
 
   return (
-    <div className="App">
-      {!hideHeaderRoutes.includes(location.pathname) && <Header />}
-      
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/" element={<Login />} />
-        <Route path="/assessment" element={<Assessment />} />
-        <Route path="/results" element={<Results />} />
-        <Route path="/helpline" element={<Helpline />} />
-        <Route path="/followup" element={<FollowUp />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+    <div className="min-h-screen flex flex-col">
+      {/* Header */}
+      {!hideHeaderRoutes.includes(location.pathname) && (
+        <header className="fixed top-0 w-full z-50">
+          <Header />
+        </header>
+      )}
 
-      {/* <Footer /> */}
+      {/* Main Content */}
+      <main className={`flex-grow ${
+        !hideHeaderRoutes.includes(location.pathname) ? 'pt-16' : ''
+      }`}>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Login />} />
+          <Route path="/assessment" element={<Assessment />} />
+          <Route path="/results" element={<Results />} />
+          <Route path="/helpline" element={<Helpline />} />
+          <Route path="/followup" element={<FollowUp />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/todo" element={<Todo />} />
+        </Routes>
+      </main>
+
+      {/* Footer */}
+      {!hideHeaderRoutes.includes(location.pathname) && (
+        <footer className="mt-auto">
+          <Footer />
+        </footer>
+      )}
     </div>
   );
 };

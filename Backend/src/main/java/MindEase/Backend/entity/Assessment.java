@@ -1,70 +1,54 @@
 package MindEase.Backend.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import lombok.Data;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "assessments")
+@Data
 public class Assessment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String assessmentType;
-    private int score;
-    private String riskLevel;
-    private String followUpDate;
 
-    @ManyToOne
+    @Column(nullable = false)
+    private String assessmentType;
+
+    @Column(nullable = false)
+    private Integer score;
+
+    @Column(name = "risk_level")
+    private String riskLevel;
+
+    @Column(name = "follow_up_date")
+    private LocalDate followUpDate;
+
+    @Column(columnDefinition = "TEXT")
+    private String suggestions;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnore // Prevents infinite recursion
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
+    @Transient
+    private String followUpDateStr;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    // Automatically sets createdAt before persisting
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getAssessmentType() {
-        return assessmentType;
-    }
-
-    public void setAssessmentType(String assessmentType) {
-        this.assessmentType = assessmentType;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public void setScore(int score) {
-        this.score = score;
-    }
-
-    public String getRiskLevel() {
-        return riskLevel;
-    }
-
-    public void setRiskLevel(String riskLevel) {
-        this.riskLevel = riskLevel;
-    }
-
-    public String getFollowUpDate() {
-        return followUpDate;
-    }
-
-    public void setFollowUpDate(String followUpDate) {
-        this.followUpDate = followUpDate;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
+    public void setFollowUpDate(String date) {
+        this.followUpDateStr = date;
+        this.followUpDate = LocalDate.parse(date);
     }
 }
