@@ -23,7 +23,7 @@ public class HospitalService {
     public void init() {
         // Initialize the Google Maps API context
         context = new GeoApiContext.Builder()
-                .apiKey("Api - Key")
+                .apiKey("AIzaSyCQWnl79TrW3aY44m2gCtcn9lEEQbp_hBY")
                 .build();
     }
 

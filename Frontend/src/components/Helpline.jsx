@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { FaPhone, FaMapMarkerAlt, FaClock, FaStar } from 'react-icons/fa';
+import { FaPhone, FaMapMarkerAlt, FaHospital, FaUserMd, FaAmbulance } from 'react-icons/fa';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDlApSSp9fl6ahjDrOsDuhXzL-ipa-AZ0E'; // Replace with your API key
+const GOOGLE_MAPS_API_KEY = 'AIzaSyCQWnl79TrW3aY44m2gCtcn9lEEQbp_hBY';
 
 const Helpline = () => {
   const mapRef = useRef(null);
@@ -10,194 +10,219 @@ const Helpline = () => {
   const [places, setPlaces] = useState([]);
   const [selectedPlace, setSelectedPlace] = useState(null);
   const [map, setMap] = useState(null);
-  const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
+  const [emergencyContacts, setEmergencyContacts] = useState([]);
 
-  const emergencyNumbers = [
-    { name: 'National Suicide Prevention Lifeline', number: '988' },
-    { name: 'Crisis Text Line', number: 'Text HOME to 741741' },
-    { name: 'SAMHSA National Helpline', number: '1-800-662-4357' },
-    { name: 'National Alliance on Mental Illness', number: '1-800-950-6264' },
-  ];
-
-  // Initialize Google Maps
-  const initializeGoogleMaps = () => {
-    const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
-    script.async = true;
-    script.defer = true;
+  const fetchEmergencyContacts = (map, location) => {
+    const service = new window.google.maps.places.PlacesService(map);
     
-    // Define the callback function
-    window.initMap = () => {
-      setGoogleMapsLoaded(true);
-    };
-
-    // Handle script load error
-    script.onerror = () => {
-      setError('Failed to load Google Maps API');
-      setLoading(false);
-    };
-
-    document.head.appendChild(script);
-  };
-
-  const initMap = async (position) => {
-    if (!window.google) {
-      setError('Google Maps not loaded');
-      return;
-    }
-
-    try {
-      const location = {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      };
-
-      // Create the map instance
-      const mapInstance = new window.google.maps.Map(mapRef.current, {
-        center: location,
-        zoom: 13,
-      });
-
-      setMap(mapInstance);
-
-      // Add user location marker
-      new window.google.maps.marker.AdvancedMarkerElement({
-        map: mapInstance,
-        position: location,
-        title: "Your Location",
-      });
-
-      // Search for places
-      await searchNearbyPlaces(mapInstance, location);
-      
-    } catch (error) {
-      console.error('Error initializing map:', error);
-      setError('Failed to initialize map');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const searchNearbyPlaces = async (mapInstance, location) => {
-    const service = new window.google.maps.places.PlacesService(mapInstance);
-    
-    const searchTypes = [
-      'mental_health',
-      'psychologist',
-      'psychiatrist',
-      'counselor'
+    // Array of search queries for different types of emergency services
+    const searchQueries = [
+      { type: 'doctor', keyword: 'psychiatrist', icon: <FaUserMd /> },
+  { type: 'doctor', keyword: 'psychologist', icon: <FaUserMd /> },
+  { type: 'hospital', keyword: 'mental health clinic', icon: <FaHospital /> },
     ];
 
-    try {
-      for (const type of searchTypes) {
-        const request = {
-          location: location,
-          radius: 5000,
-          keyword: type,
-          type: ['health']
-        };
+    searchQueries.forEach(query => {
+      const request = {
+        location: location,
+        radius: '5000', // 5km radius
+        type: query.type,
+        keyword: query.keyword,
+      };
 
-        const results = await new Promise((resolve, reject) => {
-          service.nearbySearch(request, (results, status) => {
-            if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-              resolve(results);
-            } else {
-              reject(status);
-            }
+      service.nearbySearch(request, (results, status) => {
+        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
+          // For each place, get more details including phone number
+          results.slice(0, 5).forEach(result => { // Limit to 5 results per category
+            service.getDetails(
+              {
+                placeId: result.place_id,
+                fields: ['name', 'formatted_phone_number', 'formatted_address', 'opening_hours']
+              },
+              (place, detailStatus) => {
+                if (detailStatus === window.google.maps.places.PlacesServiceStatus.OK) {
+                  setEmergencyContacts(prev => [...prev, {
+                    name: place.name,
+                    phone: place.formatted_phone_number,
+                    address: place.formatted_address,
+                    type: query.keyword,
+                    icon: query.icon,
+                    isOpen: place.opening_hours?.isOpen() || false
+                  }]);
+                }
+              }
+            );
           });
-        });
+        }
+      });
+    });
+  };
 
-        // Create markers for results
-        results.forEach(place => {
-          const marker = new window.google.maps.marker.AdvancedMarkerElement({
-            map: mapInstance,
-            position: place.geometry.location,
-            title: place.name,
+  const fetchNearbyHospitals = async (latitude, longitude) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/nearby-hospitals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          latitude,
+          longitude,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch nearby hospitals');
+      }
+
+      const hospitals = await response.json();
+      setPlaces(hospitals);
+
+      if (map) {
+        hospitals.forEach(hospital => {
+          const marker = new window.google.maps.Marker({
+            map: map,
+            position: { lat: hospital.latitude, lng: hospital.longitude },
+            title: hospital.name,
           });
 
           marker.addListener("click", () => {
-            getPlaceDetails(service, place.place_id);
+            setSelectedPlace(hospital);
           });
         });
-
-        setPlaces(prev => [...prev, ...results]);
       }
     } catch (error) {
-      console.error('Error searching places:', error);
-      setError('Failed to find nearby services');
+      console.error('Error fetching nearby hospitals:', error);
+      setError('Failed to fetch nearby hospitals');
     }
-  };
-
-  const getPlaceDetails = (service, placeId) => {
-    service.getDetails(
-      {
-        placeId: placeId,
-        fields: ['name', 'formatted_address', 'formatted_phone_number', 'opening_hours', 'rating', 'website']
-      },
-      (place, status) => {
-        if (status === window.google.maps.places.PlacesServiceStatus.OK) {
-          setSelectedPlace(place);
-        }
-      }
-    );
   };
 
   useEffect(() => {
-    // Load Google Maps script if not already loaded
-    if (!window.google) {
-      initializeGoogleMaps();
-    }
+    const loadGoogleMaps = () => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      
+      script.onload = () => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const location = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              };
 
-    // Get user location and initialize map when Google Maps is loaded
-    if (googleMapsLoaded) {
-      navigator.geolocation.getCurrentPosition(
-        initMap,
-        (error) => {
-          console.error('Geolocation error:', error);
-          setError('Unable to get your location. Please enable location services.');
+              const mapInstance = new window.google.maps.Map(mapRef.current, {
+                center: location,
+                zoom: 13,
+              });
+
+              setMap(mapInstance);
+
+              // Add user location marker
+              new window.google.maps.Marker({
+                map: mapInstance,
+                position: location,
+                title: "Your Location",
+                icon: {
+                  url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                }
+              });
+
+              fetchNearbyHospitals(location.lat, location.lng);
+              fetchEmergencyContacts(mapInstance, location);
+              setLoading(false);
+            },
+            (error) => {
+              console.error('Geolocation error:', error);
+              setError('Unable to get your location. Please enable location services.');
+              setLoading(false);
+            }
+          );
+        } else {
+          setError('Geolocation is not supported by your browser');
           setLoading(false);
         }
-      );
-    }
+      };
+
+      script.onerror = () => {
+        setError('Failed to load Google Maps');
+        setLoading(false);
+      };
+
+      document.head.appendChild(script);
+    };
+
+    loadGoogleMaps();
 
     return () => {
-      // Cleanup
-      if (map) {
-        // Cleanup map instance if needed
+      const scripts = document.getElementsByTagName('script');
+      for (let script of scripts) {
+        if (script.src.includes('maps.googleapis.com')) {
+          script.remove();
+        }
       }
     };
-  }, [googleMapsLoaded]);
+  }, []);
+
+  // Group emergency contacts by type
+  const groupedContacts = emergencyContacts.reduce((acc, contact) => {
+    if (!acc[contact.type]) {
+      acc[contact.type] = [];
+    }
+    acc[contact.type].push(contact);
+    return acc;
+  }, {});
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-sage-100 py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Mental Health Support Near You
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Find professional help and support services in your area. In case of emergency, please call 988 immediately.
+            Find professional help and emergency services in your area.
           </p>
         </div>
 
-        {/* Emergency Numbers Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {emergencyNumbers.map((emergency, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
-              <h3 className="font-semibold text-gray-900 mb-2">{emergency.name}</h3>
-              <a
-                href={`tel:${emergency.number.replace(/\D/g,'')}`}
-                className="inline-flex items-center text-teal-600 hover:text-teal-700"
-              >
-                <FaPhone className="mr-2" />
-                {emergency.number}
-              </a>
+        {/* Emergency Contacts Section */}
+        <div className="mb-8">
+          {Object.entries(groupedContacts).map(([type, contacts]) => (
+            <div key={type} className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 capitalize">
+                {type}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {contacts.map((contact, index) => (
+                  <div key={index} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300">
+                    <div className="flex items-center mb-2">
+                      {contact.icon}
+                      <h4 className="font-semibold text-gray-900 ml-2">{contact.name}</h4>
+                    </div>
+                    {contact.phone && (
+                      <a
+                        href={`tel:${contact.phone.replace(/\D/g,'')}`}
+                        className="inline-flex items-center text-teal-600 hover:text-teal-700 mb-2"
+                      >
+                        <FaPhone className="mr-2" />
+                        {contact.phone}
+                      </a>
+                    )}
+                    <p className="text-sm text-gray-600">
+                      <FaMapMarkerAlt className="inline mr-2" />
+                      {contact.address}
+                    </p>
+                    <span className={`text-sm ${contact.isOpen ? 'text-green-600' : 'text-red-600'}`}>
+                      {contact.isOpen ? 'Open Now' : 'Closed'}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Map Container */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 bg-white rounded-xl shadow-md overflow-hidden relative">
             {loading && (
@@ -221,49 +246,41 @@ const Helpline = () => {
             <div ref={mapRef} className="h-[600px] w-full" />
           </div>
 
-          {/* Places List */}
           <div className="bg-white rounded-xl shadow-md p-6 h-[600px] overflow-y-auto">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Nearby Services
+              Nearby Hospitals
             </h3>
             
             {places.length > 0 ? (
               <div className="space-y-4">
-                {places.map((place, index) => (
+                {places.map((hospital, index) => (
                   <div
                     key={index}
                     className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
-                      selectedPlace?.place_id === place.place_id
+                      selectedPlace?.name === hospital.name
                         ? 'bg-teal-50 border-2 border-teal-500'
                         : 'hover:bg-gray-50 border-2 border-transparent'
                     }`}
-                    onClick={() => setSelectedPlace(place)}
+                    onClick={() => setSelectedPlace(hospital)}
                   >
-                    <h4 className="font-medium text-gray-900">{place.name}</h4>
+                    <h4 className="font-medium text-gray-900">{hospital.name}</h4>
                     <div className="mt-2 text-sm text-gray-600">
                       <div className="flex items-center">
                         <FaMapMarkerAlt className="mr-2 text-teal-600" />
-                        {place.vicinity}
+                        {hospital.address}
                       </div>
-                      {place.rating && (
-                        <div className="flex items-center mt-1">
-                          <FaStar className="mr-2 text-yellow-400" />
-                          {place.rating} ({place.user_ratings_total} reviews)
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-gray-600">
-                {loading ? 'Searching for nearby services...' : 'No services found nearby.'}
+                {loading ? 'Searching for nearby hospitals...' : 'No hospitals found nearby.'}
               </p>
             )}
           </div>
         </div>
 
-        {/* Selected Place Details */}
         {selectedPlace && (
           <div className="mt-8 bg-white rounded-xl shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">
@@ -273,30 +290,9 @@ const Helpline = () => {
               <div>
                 <p className="text-gray-600">
                   <FaMapMarkerAlt className="inline mr-2" />
-                  {selectedPlace.formatted_address}
+                  {selectedPlace.address}
                 </p>
-                {selectedPlace.formatted_phone_number && (
-                  <p className="mt-2">
-                    <a
-                      href={`tel:${selectedPlace.formatted_phone_number}`}
-                      className="text-teal-600 hover:text-teal-700"
-                    >
-                      <FaPhone className="inline mr-2" />
-                      {selectedPlace.formatted_phone_number}
-                    </a>
-                  </p>
-                )}
               </div>
-              {selectedPlace.opening_hours && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Opening Hours</h4>
-                  <ul className="text-sm text-gray-600">
-                    {selectedPlace.opening_hours.weekday_text.map((hours, index) => (
-                      <li key={index}>{hours}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
             </div>
           </div>
         )}
