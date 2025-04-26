@@ -64,7 +64,7 @@ public class RecommendationParserService {
                             .category(category)
                             .scheduledDate(date.atTime(9, 0)) // Setting default time to 9:00 AM
                             .completed(false)
-                            .build();
+                            .recurring(true).build();
                     tasks.add(task);
                 }
             }

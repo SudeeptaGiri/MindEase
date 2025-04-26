@@ -21,7 +21,6 @@ public class AssessmentController {
     @Autowired
     private AssessmentService assessmentService;
 
-    // ✅ POST - Save new assessment
     @PostMapping
     public ResponseEntity<?> saveAssessment(@RequestBody AssessmentRequest dto) {
         try {
@@ -35,7 +34,6 @@ public class AssessmentController {
         }
     }
 
-    // ✅ GET - Get assessments by user ID
     @GetMapping("/user/{userId}")
     public ResponseEntity<?> getAssessmentsByUserId(@PathVariable Long userId) {
         try {
