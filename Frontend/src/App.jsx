@@ -10,6 +10,7 @@ import FollowUp from './components/FollowUp';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Todo from './components/Todo';
+import AssessmentHistory from './components/AssessmentHistory';
 import './styles/App.css';
 
 const App = () => {
@@ -47,6 +48,7 @@ const AppContent = () => {
           <Route path="/followup" element={<FollowUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/todo" element={<Todo />} />
+          <Route path="/assessment-history" element={<AssessmentHistory />} />
         </Routes>
       </main>
 

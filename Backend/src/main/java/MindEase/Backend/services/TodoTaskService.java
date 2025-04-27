@@ -1,3 +1,4 @@
+// services/TodoTaskService.java
 package MindEase.Backend.services;
 
 import MindEase.Backend.entity.TodoTask;
@@ -7,9 +8,7 @@ import MindEase.Backend.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.LocalDateTime;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 @Service
 @Transactional
 public class TodoTaskService {
-
     private final TodoTaskRepository todoTaskRepository;
     private final UserRepository userRepository;
 
@@ -27,7 +25,44 @@ public class TodoTaskService {
         this.userRepository = userRepository;
     }
 
-    public List<TodoTask> createTasksFromAssessment(Long userId, Long assessmentId, Map<String, List<String>> categoryTasks) {
+    public List<TodoTask> getDailyTasks(Long userId) {
+        LocalDateTime start = LocalDateTime.now().withHour(0).withMinute(0);
+        LocalDateTime end = start.plusDays(1);
+        
+        List<TodoTask> tasks = new ArrayList<>();
+        
+        // Get regular tasks
+        tasks.addAll(todoTaskRepository.findByUserIdAndScheduledDateBetweenOrderByScheduledDateAsc(
+            userId, start, end));
+        
+        // Process recurring tasks
+        List<TodoTask> recurringTasks = todoTaskRepository.findRecurringTasksByUserId(userId);
+        processRecurringTasks(recurringTasks, userId, tasks);
+        
+        return tasks;
+    }
+
+    public List<TodoTask> getTasksByCategory(Long userId, TodoTask.TaskCategory category) {
+        return todoTaskRepository.findByUserIdAndCategory(userId, category);
+    }
+
+    public TodoTask createTask(TodoTask task) {
+        User user = userRepository.findById(task.getUser().getId())
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        task.setUser(user);
+        if (task.getScheduledDate() == null) {
+            task.setScheduledDate(LocalDateTime.now());
+        }
+        
+        return todoTaskRepository.save(task);
+    }
+
+    public List<TodoTask> createTasksFromAssessment(
+        Long userId, 
+        Long assessmentId, 
+        Map<String, List<String>> categoryTasks
+    ) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -35,22 +70,16 @@ public class TodoTaskService {
 
         categoryTasks.forEach((category, tasksList) -> {
             tasksList.forEach(taskText -> {
-                TodoTask task = new TodoTask();
-                task.setTask(taskText);
-                try {
-                    task.setCategory(TodoTask.TaskCategory.valueOf(category));
-                } catch (IllegalArgumentException e) {
-                    // Handle invalid category
-                    task.setCategory(TodoTask.TaskCategory.DAILY);
-                }
-                task.setCompleted(false);
-                task.setUser(user);
-                task.setSourceAssessmentId(assessmentId);
-                task.setScheduledDate(LocalDateTime.now());
+                TodoTask task = TodoTask.builder()
+                    .task(taskText)
+                    .category(TodoTask.TaskCategory.valueOf(category))
+                    .completed(false)
+                    .user(user)
+                    .sourceAssessmentId(assessmentId)
+                    .scheduledDate(LocalDateTime.now())
+                    .build();
 
-                // Set recurrence based on category
                 setRecurrencePattern(task);
-                
                 tasks.add(task);
             });
         });
@@ -72,10 +101,6 @@ public class TodoTaskService {
                 task.setRecurring(true);
                 task.setRecurrencePattern("MONTHLY");
                 break;
-            case QUARTERLY:
-                task.setRecurring(true);
-                task.setRecurrencePattern("QUARTERLY");
-                break;
             case SOCIAL:
                 task.setRecurring(true);
                 task.setRecurrencePattern("WEEKLY");
@@ -84,80 +109,67 @@ public class TodoTaskService {
                 task.setRecurring(true);
                 task.setRecurrencePattern("DAILY");
                 break;
-            case PROFESSIONAL:
-                task.setRecurring(false);
-                break;
             default:
                 task.setRecurring(false);
         }
     }
 
     private void processRecurringTasks(List<TodoTask> recurringTasks, Long userId, List<TodoTask> allTasks) {
-        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
         
         recurringTasks.forEach(task -> {
-            if (shouldCreateNewInstance(task)) {
+            if (shouldCreateNewInstance(task, now)) {
                 TodoTask newInstance = createNewTaskInstance(task);
                 allTasks.add(todoTaskRepository.save(newInstance));
             }
         });
     }
 
-    private boolean shouldCreateNewInstance(TodoTask task) {
-        if (!task.isRecurring()) return false;
+    private boolean shouldCreateNewInstance(TodoTask task, LocalDateTime now) {
+        if (!task.isRecurring() || task.getScheduledDate() == null) return false;
         
         LocalDateTime lastScheduled = task.getScheduledDate();
-        LocalDateTime now = LocalDateTime.now();
         
         switch (task.getRecurrencePattern()) {
             case "DAILY":
                 return lastScheduled.toLocalDate().isBefore(now.toLocalDate());
             case "WEEKLY":
-                return lastScheduled.toLocalDate().plusWeeks(1).isBefore(now.toLocalDate());
+                return lastScheduled.plusWeeks(1).isBefore(now);
+            case "MONTHLY":
+                return lastScheduled.plusMonths(1).isBefore(now);
             default:
                 return false;
         }
     }
 
     private TodoTask createNewTaskInstance(TodoTask template) {
-        TodoTask newTask = new TodoTask();
-        newTask.setTask(template.getTask());
-        newTask.setCategory(template.getCategory());
-        newTask.setUser(template.getUser());
-        newTask.setScheduledDate(LocalDateTime.now());
-        newTask.setRecurring(template.isRecurring());
-        newTask.setRecurrencePattern(template.getRecurrencePattern());
-        newTask.setSourceAssessmentId(template.getSourceAssessmentId());
-        return newTask;
-    }
-
-    public TodoTask createTask(TodoTask task) {
-        User user = userRepository.findById(task.getUser().getId())
-            .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        task.setUser(user);
-        task.setScheduledDate(LocalDateTime.now());
-        setRecurrencePattern(task);
-        
-        return todoTaskRepository.save(task);
+        return TodoTask.builder()
+            .task(template.getTask())
+            .category(template.getCategory())
+            .user(template.getUser())
+            .scheduledDate(LocalDateTime.now())
+            .recurring(template.isRecurring())
+            .recurrencePattern(template.getRecurrencePattern())
+            .sourceAssessmentId(template.getSourceAssessmentId())
+            .completed(false)
+            .build();
     }
 
     public TodoTask updateTask(Long taskId, boolean completed) {
         TodoTask task = todoTaskRepository.findById(taskId)
             .orElseThrow(() -> new RuntimeException("Task not found"));
+            
         task.setCompleted(completed);
+        
+        // If task is recurring and completed, create next instance
+        if (completed && task.isRecurring()) {
+            createNewTaskInstance(task);
+        }
+        
         return todoTaskRepository.save(task);
     }
 
     public void deleteTask(Long taskId) {
         todoTaskRepository.deleteById(taskId);
-    }
-
-    public List<TodoTask> getTasksByCategory(Long userId, TodoTask.TaskCategory category) {
-        return todoTaskRepository.findByUserIdAndCategory(userId, category);
-    }
-
-    public List<TodoTask> getDailyTasks(Long userId) {
-        return todoTaskRepository.findByUserIdAndScheduledDateBetweenOrderByScheduledDateAsc(userId, LocalDateTime.now(), LocalDateTime.now().plusDays(1));
     }
 }

@@ -1,3 +1,4 @@
+// controllers/TodoController.java
 package MindEase.Backend.controllers;
 
 import MindEase.Backend.entity.TodoTask;
@@ -5,15 +6,13 @@ import MindEase.Backend.services.TodoTaskService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:3000")
 public class TodoController {
-
     @Autowired
     private TodoTaskService todoTaskService;
 
@@ -47,10 +46,12 @@ public class TodoController {
         @RequestBody Map<String, List<String>> categoryTasks
     ) {
         try {
-            List<TodoTask> tasks = todoTaskService.createTasksFromAssessment(userId, assessmentId, categoryTasks);
+            List<TodoTask> tasks = todoTaskService.createTasksFromAssessment(
+                userId, assessmentId, categoryTasks);
             return ResponseEntity.ok(tasks);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", e.getMessage()));
         }
     }
 

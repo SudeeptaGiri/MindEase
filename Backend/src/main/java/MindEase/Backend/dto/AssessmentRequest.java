@@ -1,4 +1,6 @@
+// dto/AssessmentRequest.java
 package MindEase.Backend.dto;
+
 import lombok.Data;
 
 @Data

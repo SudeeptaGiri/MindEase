@@ -1,3 +1,4 @@
+// entity/TodoTask.java
 package MindEase.Backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -6,6 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "todo_tasks")
 @Getter
@@ -13,7 +15,10 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TodoTask extends BaseEntity {
+public class TodoTask {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @NotBlank(message = "Task description is required")
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -45,11 +50,18 @@ public class TodoTask extends BaseEntity {
     @Column(name = "recurrence_pattern")
     private String recurrencePattern;
 
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
     public enum TaskCategory {
-        DAILY("Daily Practices"),
-        WEEKLY("Weekly Practices"),
-        MONTHLY("Monthly Check-Ins"),
-        QUARTERLY("Quarterly Goals"),
+        DAILY("Daily Tasks"),
+        WEEKLY("Weekly Goals"),
+        MONTHLY("Monthly Goals"),
         SOCIAL("Social Connections"),
         SELF_CARE("Self-Care Activities"),
         PROFESSIONAL("Professional Support");
