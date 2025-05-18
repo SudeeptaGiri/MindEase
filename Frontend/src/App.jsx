@@ -1,3 +1,4 @@
+// src/App.js (modified)
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 import Login from './components/Login';
@@ -10,6 +11,10 @@ import FollowUp from './components/FollowUp';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Todo from './components/Todo';
+import LandingPage from './components/LandingPage';
+import VolunteerRegister from './components/VolunteerRegister';
+import AdminDashboard from './components/AdminDashboard';
+import VolunteerDashboard from './components/VolunteerDashboard';
 import './styles/App.css';
 
 const App = () => {
@@ -22,7 +27,7 @@ const App = () => {
 
 const AppContent = () => {
   const location = useLocation();
-  const hideHeaderRoutes = ['/login', '/register', '/'];
+  const hideHeaderRoutes = ['/login', '/register', '/volunteer-register', '/'];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -38,15 +43,18 @@ const AppContent = () => {
         !hideHeaderRoutes.includes(location.pathname) ? 'pt-16' : ''
       }`}>
         <Routes>
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<Login />} />
+          <Route path="/volunteer-register" element={<VolunteerRegister />} />
           <Route path="/assessment" element={<Assessment />} />
           <Route path="/results" element={<Results />} />
           <Route path="/helpline" element={<Helpline />} />
           <Route path="/followup" element={<FollowUp />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/todo" element={<Todo />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
         </Routes>
       </main>
 

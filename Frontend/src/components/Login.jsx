@@ -1,7 +1,7 @@
+// src/components/Login.jsx (modified)
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -9,6 +9,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [userType, setUserType] = useState('user'); // 'user', 'volunteer', 'admin'
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -25,31 +26,65 @@ const Login = () => {
     setSuccessMessage('');
   
     try {
-      const response = await axios.post('http://localhost:8080/api/users/login', {
+      let endpoint;
+      switch (userType) {
+        case 'volunteer':
+          endpoint = 'http://localhost:8080/api/volunteers/login';
+          break;
+        case 'admin':
+          endpoint = 'http://localhost:8080/api/admin/login';
+          break;
+        default:
+          endpoint = 'http://localhost:8080/api/users/login';
+      }
+      
+      const response = await axios.post(endpoint, {
         username,
         password,
       });
   
-      const user = response.data?.user;
-      if (!user || !user.id) {
-        throw new Error('User object or ID not found in response');
+      let userData;
+      if (userType === 'user') {
+        userData = {
+          ...response.data.user,
+          role: 'USER'
+        };
+      } else if (userType === 'volunteer') {
+        userData = response.data.volunteer;
+      } else {
+        userData = {
+          ...response.data.admin,
+          role: 'ADMIN'
+        };
       }
   
-      // ✅ Save user info in sessionStorage and localStorage
-      sessionStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('userId', user.id);
-      localStorage.setItem('token', response.data.token);
+      if (!userData || !userData.id) {
+        throw new Error('User data not found in response');
+      }
   
-      setSuccessMessage(`Welcome back, ${user.username}!`);
+      // Save user info in sessionStorage
+      sessionStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userId', userData.id);
+      localStorage.setItem('userType', userType);
+  
+      setSuccessMessage(`Welcome back, ${userData.username}!`);
   
       setTimeout(() => {
-        navigate(location.state?.from || '/dashboard');
+        if (userType === 'admin') {
+          navigate('/admin-dashboard');
+        } else if (userType === 'volunteer') {
+          navigate('/volunteer-dashboard');
+        } else {
+          navigate(location.state?.from || '/dashboard');
+        }
       }, 1500);
   
     } catch (error) {
       console.error('Login failed:', error);
       if (error.response?.status === 401) {
         setError('Invalid username or password');
+      } else if (error.response?.data?.error) {
+        setError(error.response.data.error);
       } else {
         setError('Something went wrong. Please try again later.');
       }
@@ -57,7 +92,6 @@ const Login = () => {
       setLoading(false);
     }
   };
-  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 to-sage-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -68,6 +102,40 @@ const Login = () => {
           <h2 className="text-xl text-gray-600 font-light">
             Welcome back to your mental wellness journey
           </h2>
+        </div>
+
+        {/* User Type Selection */}
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={() => setUserType('user')}
+            className={`px-4 py-2 rounded-lg ${
+              userType === 'user'
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            User
+          </button>
+          <button
+            onClick={() => setUserType('volunteer')}
+            className={`px-4 py-2 rounded-lg ${
+              userType === 'volunteer'
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Volunteer
+          </button>
+          <button
+            onClick={() => setUserType('admin')}
+            className={`px-4 py-2 rounded-lg ${
+              userType === 'admin'
+                ? 'bg-teal-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            Admin
+          </button>
         </div>
 
         {/* Login Form */}
@@ -127,27 +195,37 @@ const Login = () => {
                   Logging in...
                 </span>
               ) : (
-                'Sign in'
+                `Sign in as ${userType === 'user' ? 'User' : userType === 'volunteer' ? 'Volunteer' : 'Admin'}`
               )}
             </button>
           </div>
         </form>
 
-        {/* Registration Link */}
+        {/* Registration Links */}
         <div className="text-center mt-4">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-teal-600 hover:text-teal-500 transition-colors duration-200">
-              Start your wellness journey
-            </Link>
-          </p>
+          {userType === 'user' && (
+            <p className="text-sm text-gray-600">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-medium text-teal-600 hover:text-teal-500 transition-colors duration-200">
+                Start your wellness journey
+              </Link>
+            </p>
+          )}
+          {userType === 'volunteer' && (
+            <p className="text-sm text-gray-600">
+              Want to become a volunteer?{' '}
+              <Link to="/volunteer-register" className="font-medium text-teal-600 hover:text-teal-500 transition-colors duration-200">
+                Apply to be a volunteer
+              </Link>
+            </p>
+          )}
         </div>
 
-        {/* Additional Info */}
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            Your mental health matters. Join MindEase for personalized assessments and support.
-          </p>
+        {/* Back to Home */}
+        <div className="text-center mt-4">
+          <Link to="/" className="text-sm text-gray-500 hover:text-teal-600">
+            Back to Home
+          </Link>
         </div>
       </div>
     </div>
