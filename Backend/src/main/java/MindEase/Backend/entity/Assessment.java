@@ -1,9 +1,9 @@
+// entity/Assessment.java
 package MindEase.Backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -27,7 +27,7 @@ public class Assessment {
     @Column(name = "follow_up_date")
     private LocalDate followUpDate;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "JSON")
     private String suggestions;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,20 +35,11 @@ public class Assessment {
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
-    @Transient
-    private String followUpDateStr;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Automatically sets createdAt before persisting
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    public void setFollowUpDate(String date) {
-        this.followUpDateStr = date;
-        this.followUpDate = LocalDate.parse(date);
     }
 }

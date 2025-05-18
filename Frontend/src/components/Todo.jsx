@@ -1,3 +1,4 @@
+// src/components/Todo.jsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -10,7 +11,9 @@ import {
   FaUsers,
   FaHeart,
   FaBriefcase,
-  FaFilter
+  FaFilter,
+  FaSync,
+  FaClock
 } from 'react-icons/fa';
 
 const Todo = () => {
@@ -18,19 +21,60 @@ const Todo = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [newTask, setNewTask] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('ALL');
-  const [filter, setFilter] = useState('ALL'); // ALL, PENDING, COMPLETED
+  const [selectedCategory, setSelectedCategory] = useState('DAILY');
+  const [filter, setFilter] = useState('ALL');
+  const [recurrence, setRecurrence] = useState('NONE');
 
   const categories = {
-    DAILY_PRACTICE: { icon: FaSun, label: 'Daily Practice', color: 'yellow' },
-    WEEKLY_GOAL: { icon: FaCalendarAlt, label: 'Weekly Goals', color: 'blue' },
-    SOCIAL_CONNECTION: { icon: FaUsers, label: 'Social Connections', color: 'purple' },
-    SELF_CARE: { icon: FaHeart, label: 'Self Care', color: 'red' },
-    PROFESSIONAL_SUPPORT: { icon: FaBriefcase, label: 'Professional Support', color: 'green' }
+    DAILY: { 
+      icon: FaSun, 
+      label: 'Daily Tasks', 
+      color: 'yellow',
+      description: 'Tasks to be completed every day'
+    },
+    WEEKLY: { 
+      icon: FaCalendarAlt, 
+      label: 'Weekly Goals', 
+      color: 'blue',
+      description: 'Goals to achieve this week'
+    },
+    MONTHLY: { 
+      icon: FaCalendarAlt, 
+      label: 'Monthly Goals', 
+      color: 'purple',
+      description: 'Long-term objectives'
+    },
+    SOCIAL: { 
+      icon: FaUsers, 
+      label: 'Social Connections', 
+      color: 'indigo',
+      description: 'Activities to maintain relationships'
+    },
+    SELF_CARE: { 
+      icon: FaHeart, 
+      label: 'Self Care', 
+      color: 'red',
+      description: 'Activities for personal well-being'
+    },
+    PROFESSIONAL: { 
+      icon: FaBriefcase, 
+      label: 'Professional Support', 
+      color: 'green',
+      description: 'Professional development and support tasks'
+    }
   };
+
+  const recurrenceOptions = [
+    { value: 'NONE', label: 'No Recurrence', icon: FaClock },
+    { value: 'DAILY', label: 'Daily', icon: FaSun },
+    { value: 'WEEKLY', label: 'Weekly', icon: FaCalendarAlt },
+    { value: 'MONTHLY', label: 'Monthly', icon: FaCalendarAlt }
+  ];
 
   useEffect(() => {
     fetchTodos();
+    const interval = setInterval(fetchTodos, 1000 * 60 * 60); // Refresh every hour
+    return () => clearInterval(interval);
   }, []);
 
   const fetchTodos = async () => {
@@ -54,7 +98,10 @@ const Todo = () => {
   };
 
   const addTodo = async () => {
-    if (!newTask.trim()) return;
+    if (!newTask.trim()) {
+      toast.warning('Please enter a task description');
+      return;
+    }
 
     try {
       const user = JSON.parse(sessionStorage.getItem('user'));
@@ -63,12 +110,16 @@ const Todo = () => {
         return;
       }
 
-      const response = await axios.post(`http://localhost:8080/api/todos`, {
+      const taskData = {
         task: newTask,
         category: selectedCategory,
-        userId: user.id
-      });
+        userId: user.id,
+        recurring: recurrence !== 'NONE',
+        recurrencePattern: recurrence,
+        scheduledDate: new Date().toISOString()
+      };
 
+      const response = await axios.post('http://localhost:8080/api/todos', taskData);
       setTodos(prev => [...prev, response.data]);
       setNewTask('');
       toast.success('Task added successfully');
@@ -85,9 +136,13 @@ const Todo = () => {
         completed: !task.completed
       });
       
-      setTodos(prev => prev.map(t => 
-        t.id === taskId ? response.data : t
-      ));
+      if (response.data.recurring && response.data.completed) {
+        fetchTodos(); // Refresh to get the new recurring instance
+      } else {
+        setTodos(prev => prev.map(t => 
+          t.id === taskId ? response.data : t
+        ));
+      }
       
       toast.success(`Task ${response.data.completed ? 'completed' : 'uncompleted'}`);
     } catch (error) {
@@ -119,11 +174,11 @@ const Todo = () => {
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-sage-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-white rounded-xl shadow-lg p-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">Daily Tasks</h2>
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">Task Manager</h2>
 
           {/* Add Task Form */}
           <div className="mb-8">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
               <input
                 type="text"
                 placeholder="Add a new task..."
@@ -137,16 +192,26 @@ const Todo = () => {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                <option value="ALL">All Categories</option>
                 {Object.entries(categories).map(([key, { label }]) => (
                   <option key={key} value={key}>{label}</option>
                 ))}
               </select>
+              <select
+                value={recurrence}
+                onChange={(e) => setRecurrence(e.target.value)}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              >
+                {recurrenceOptions.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
               <button
                 onClick={addTodo}
-                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500"
+                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 flex items-center justify-center"
               >
-                <FaPlus className="inline-block mr-2" />
+                <FaPlus className="mr-2" />
                 Add Task
               </button>
             </div>
@@ -156,7 +221,7 @@ const Todo = () => {
           <div className="flex flex-wrap gap-4 mb-6">
             <button
               onClick={() => setFilter('ALL')}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'ALL' 
                   ? 'bg-teal-600 text-white' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -166,7 +231,7 @@ const Todo = () => {
             </button>
             <button
               onClick={() => setFilter('PENDING')}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'PENDING' 
                   ? 'bg-yellow-600 text-white' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -176,7 +241,7 @@ const Todo = () => {
             </button>
             <button
               onClick={() => setFilter('COMPLETED')}
-              className={`px-4 py-2 rounded-lg ${
+              className={`px-4 py-2 rounded-lg transition-colors ${
                 filter === 'COMPLETED' 
                   ? 'bg-green-600 text-white' 
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -223,14 +288,23 @@ const Todo = () => {
                     <p className={`text-gray-900 ${todo.completed ? 'line-through text-gray-500' : ''}`}>
                       {todo.task}
                     </p>
-                    <span className="text-sm text-gray-500">
-                      {categories[todo.category]?.label || todo.category}
-                    </span>
+                    <div className="flex items-center text-sm text-gray-500 mt-1">
+                      {React.createElement(categories[todo.category]?.icon, {
+                        className: "h-4 w-4 mr-1"
+                      })}
+                      <span>{categories[todo.category]?.label}</span>
+                      {todo.recurring && (
+                        <span className="ml-2 flex items-center">
+                          <FaSync className="h-3 w-3 mr-1" />
+                          {todo.recurrencePattern.toLowerCase()}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   <button
                     onClick={() => deleteTodo(todo.id)}
-                    className="ml-4 text-red-500 hover:text-red-700"
+                    className="ml-4 text-red-500 hover:text-red-700 focus:outline-none"
                   >
                     <FaTrash className="h-5 w-5" />
                   </button>

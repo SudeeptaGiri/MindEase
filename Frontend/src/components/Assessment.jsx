@@ -1,3 +1,4 @@
+// src/components/Assessment.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -6,6 +7,7 @@ const Assessment = () => {
   const [assessmentType, setAssessmentType] = useState('');
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(false);
+  const [generatingSuggestions, setGeneratingSuggestions] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -32,7 +34,6 @@ const Assessment = () => {
     ],
   };
 
-  // Check authentication on component mount
   useEffect(() => {
     const user = JSON.parse(sessionStorage.getItem('user'));
     if (!user || !user.id) {
@@ -40,7 +41,6 @@ const Assessment = () => {
       return;
     }
 
-    // Load saved progress if any
     const savedType = localStorage.getItem('assessmentType');
     const savedAnswers = JSON.parse(localStorage.getItem('answers'));
 
@@ -77,49 +77,104 @@ const Assessment = () => {
     }
   };
 
-  const generateSuggestions = (type, score) => {
-    if (type === 'PHQ-9') {
-      if (score >= 20) return ['Seek immediate professional help', 'Practice mindfulness', 'Daily journaling'];
-      if (score >= 15) return ['Consult a therapist', 'Stay active', 'Join a support group'];
-      if (score >= 10) return ['Try meditation', 'Improve sleep hygiene', 'Talk to close ones'];
-      if (score >= 5) return ['Engage in hobbies', 'Stay socially connected'];
-      return ['Keep up the good work!', 'Maintain healthy habits'];
-    }
-    if (type === 'GAD-7') {
-      if (score >= 15) return ['Seek professional therapy', 'Practice deep breathing', 'Use relaxation apps'];
-      if (score >= 10) return ['Regular exercise', 'Limit caffeine', 'Try yoga'];
-      if (score >= 5) return ['Listen to calming music', 'Maintain a routine'];
-      return ['Continue doing what helps you stay calm'];
-    }
-    return [];
-  };
-
   const calculateScore = async () => {
     setLoading(true);
+    setGeneratingSuggestions(true);
     setError('');
-  
+
     try {
       const user = JSON.parse(sessionStorage.getItem('user'));
       if (!user || !user.id) {
         throw new Error('Please log in to save your assessment');
       }
-  
+
       const totalScore = Object.values(answers).reduce((sum, value) => sum + value, 0);
       const riskLevel = determineRiskLevel(totalScore);
       const followUpDate = new Date();
       followUpDate.setDate(followUpDate.getDate() + 14);
-  
+
+      // Generate AI suggestions
+      const API_KEY = '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';
+      const prompt = `You are a mental health professional creating a wellness plan. Based on a ${assessmentType} assessment with a score of ${totalScore} indicating ${riskLevel}, create a structured wellness plan. Respond with ONLY a JSON object in this exact format, without any markdown or additional text:
+      {
+        "categories": {
+          "daily": {
+            "title": "Daily Tasks",
+            "tasks": ["task1", "task2", "task3"]
+          },
+          "weekly": {
+            "title": "Weekly Goals",
+            "tasks": ["task1", "task2", "task3"]
+          },
+          "social": {
+            "title": "Social Connections",
+            "tasks": ["task1", "task2", "task3"]
+          },
+          "selfCare": {
+            "title": "Self-Care Activities",
+            "tasks": ["task1", "task2", "task3"]
+          },
+          "professional": {
+            "title": "Professional Support",
+            "tasks": ["task1", "task2", "task3"]
+          }
+        }
+      }`;
+
+      const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_KEY}`,
+          'HTTP-Referer': window.location.href,
+          'X-Title': 'Mental Health Assistant',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'deepseek/deepseek-r1:free',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.7,
+          max_tokens: 1000,
+          response_format: { type: "json_object" }
+        }),
+      });
+
+      if (!aiResponse.ok) {
+        throw new Error('Failed to generate suggestions');
+      }
+
+      const aiData = await aiResponse.json();
+      let suggestions;
+      
+      try {
+        const content = aiData.choices[0].message.content
+          .replace(/```json\n?/g, '')
+          .replace(/```\n?/g, '')
+          .trim();
+
+        suggestions = JSON.parse(content);
+
+        if (!suggestions.categories ||
+            !suggestions.categories.daily ||
+            !suggestions.categories.weekly ||
+            !suggestions.categories.social ||
+            !suggestions.categories.selfCare ||
+            !suggestions.categories.professional) {
+          throw new Error('Invalid suggestion structure');
+        }
+      } catch (e) {
+        console.error('Error parsing AI response:', e);
+        throw new Error('Invalid suggestions format received');
+      }
+
       const assessmentData = {
         assessmentType: assessmentType,
         score: totalScore,
         riskLevel: riskLevel,
         followUpDate: followUpDate.toISOString().split('T')[0],
-        suggestions: generateSuggestions(assessmentType, totalScore).join(', '),
+        suggestions: JSON.stringify(suggestions),
         userId: user.id
       };
-  
-      console.log('Sending assessment data:', assessmentData);
-  
+
       const response = await axios.post(
         'http://localhost:8080/api/assessments',
         assessmentData,
@@ -129,33 +184,33 @@ const Assessment = () => {
           }
         }
       );
-  
-      console.log('Response:', response.data);
-  
+
       localStorage.removeItem('assessmentType');
       localStorage.removeItem('answers');
-  
+
       navigate('/results', {
         state: {
           ...assessmentData,
+          suggestions: suggestions,
           id: response.data.id
         }
       });
-  
+
     } catch (error) {
       console.error('Full error:', error);
       setError(error.response?.data?.message || 'Failed to save assessment. Please try again.');
     } finally {
       setLoading(false);
+      setGeneratingSuggestions(false);
     }
   };
 
+  
   const isComplete = assessmentType && questions[assessmentType]?.length === Object.keys(answers).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-50 to-sage-100 py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header Section */}
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
             Mental Health Assessment
@@ -171,7 +226,6 @@ const Assessment = () => {
           </div>
         )}
 
-        {/* Assessment Type Selection */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Choose Assessment Type:
@@ -187,10 +241,8 @@ const Assessment = () => {
           </select>
         </div>
 
-        {/* Questions Section */}
         {assessmentType && (
           <div className="space-y-8">
-            {/* Progress Bar */}
             <div className="bg-white rounded-xl shadow-md p-6">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
                 {assessmentType} Assessment
@@ -217,7 +269,6 @@ const Assessment = () => {
               </div>
             </div>
 
-            {/* Questions */}
             {questions[assessmentType].map((question, index) => (
               <div
                 key={index}
@@ -252,7 +303,6 @@ const Assessment = () => {
               </div>
             ))}
 
-            {/* Submit Button */}
             <div className="flex justify-center pt-6 pb-12">
               <button
                 onClick={calculateScore}
@@ -274,7 +324,7 @@ const Assessment = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Saving...
+                    {generatingSuggestions ? 'Generating Suggestions...' : 'Saving Assessment...'}
                   </>
                 ) : !isComplete ? (
                   'Please Answer All Questions'
@@ -286,7 +336,6 @@ const Assessment = () => {
           </div>
         )}
 
-        {/* Information Cards */}
         {!assessmentType && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             <div className="bg-white rounded-xl shadow-md p-6">
