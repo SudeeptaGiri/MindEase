@@ -730,7 +730,7 @@ const VolunteerRegister = () => {
                             id="specialization"
                             name="specialization"
                             required
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:ring-teal-500 focus:border-teal-500 transition-colors"
                             value={formData.specialization}
                             onChange={handleChange}
                           >
@@ -779,7 +779,7 @@ const VolunteerRegister = () => {
                             id="bio"
                             name="bio"
                             rows="4"
-                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 transition-colors"
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg text-black focus:ring-teal-500 focus:border-teal-500 transition-colors"
                             placeholder="Tell us about your professional background and approach to mental health support..."
                             value={formData.bio}
                             onChange={handleChange}

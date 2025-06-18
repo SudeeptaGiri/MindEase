@@ -22,26 +22,6 @@ public class RecommendationParserService {
         this.todoTaskRepository = todoTaskRepository;
     }
 
-    public void parseAndGenerateTasks(User user) {
-        String recommendations = user.getRecommendations();
-        if (recommendations == null || recommendations.isEmpty()) return;
-
-        List<TodoTask> tasks = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-
-        // Define simple patterns
-        tasks.addAll(extractTasks("Daily Practices", recommendations, TodoTask.TaskCategory.DAILY, today));
-        tasks.addAll(extractTasks("Weekly Practices", recommendations, TodoTask.TaskCategory.WEEKLY, today.plusDays(7)));
-        tasks.addAll(extractTasks("Monthly Check-Ins", recommendations, TodoTask.TaskCategory.MONTHLY, today.plusDays(30)));
-        tasks.addAll(extractTasks("Quarterly Goals", recommendations, TodoTask.TaskCategory.QUARTERLY, today.plusDays(90)));
-
-        for (TodoTask task : tasks) {
-            task.setUser(user);
-        }
-
-        todoTaskRepository.saveAll(tasks);
-    }
-
     private List<TodoTask> extractTasks(String sectionTitle, String fullText, TodoTask.TaskCategory category, LocalDate date) {
         List<TodoTask> tasks = new ArrayList<>();
         int start = fullText.indexOf("### **" + sectionTitle + "**");

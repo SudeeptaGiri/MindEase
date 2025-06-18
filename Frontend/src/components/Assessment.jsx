@@ -156,7 +156,9 @@ const Assessment = () => {
 
       // Generate AI suggestions
       const API_KEY = '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';
-      const prompt = `You are a mental health professional creating a wellness plan. Based on a ${assessmentType} assessment with a score of ${totalScore} indicating ${riskLevel}, create a structured wellness plan. Respond with ONLY a JSON object in this exact format, without any markdown or additional text:
+      const prompt = `You are a mental health professional creating a wellness plan.
+       Based on a ${assessmentType} assessment with a score of ${totalScore} indicating ${riskLevel}, create a structured wellness plan.
+        Respond with ONLY a JSON object in this exact format, without any markdown or additional text:
       {
         "categories": {
           "daily": {

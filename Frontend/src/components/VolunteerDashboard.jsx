@@ -50,20 +50,52 @@ const VolunteerDashboard = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // This would be a real endpoint in a complete implementation
+      // Get all users
       const response = await axios.get('http://localhost:8080/api/users');
-      setUsers(response.data);
+      const usersData = response.data;
+      
+      // For each user, fetch their last assessment to get risk level
+      const usersWithAssessments = await Promise.all(
+        usersData.map(async (user) => {
+          try {
+            const assessmentResponse = await axios.get(`http://localhost:8080/api/assessments/user/${user.id}`);
+            const userAssessments = assessmentResponse.data;
+            
+            // Sort assessments by createdAt date in descending order
+            userAssessments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            // Get the most recent assessment
+            const lastAssessment = userAssessments.length > 0 ? userAssessments[0] : null;
+            
+            return {
+              ...user,
+              lastAssessmentDate: lastAssessment ? lastAssessment.createdAt : null,
+              riskLevel: lastAssessment ? lastAssessment.riskLevel : 'No assessment'
+            };
+          } catch (err) {
+            console.error(`Error fetching assessments for user ${user.id}:`, err);
+            return {
+              ...user,
+              lastAssessmentDate: null,
+              riskLevel: 'No assessment'
+            };
+          }
+        })
+      );
+      
+      setUsers(usersWithAssessments);
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to load users');
       // For demo purposes, create some mock users
-      setUsers([
+      const mockUsers = [
         { id: 1, username: 'john_doe', fullName: 'John Doe', lastAssessmentDate: '2023-05-15', riskLevel: 'Moderate Depression', avatar: null },
         { id: 2, username: 'jane_smith', fullName: 'Jane Smith', lastAssessmentDate: '2023-05-18', riskLevel: 'Mild Anxiety', avatar: null },
         { id: 3, username: 'mike_johnson', fullName: 'Mike Johnson', lastAssessmentDate: '2023-05-10', riskLevel: 'Severe Depression', avatar: null },
         { id: 4, username: 'sarah_williams', fullName: 'Sarah Williams', lastAssessmentDate: '2023-05-20', riskLevel: 'Minimal Depression', avatar: null },
         { id: 5, username: 'alex_brown', fullName: 'Alex Brown', lastAssessmentDate: '2023-05-12', riskLevel: 'Severe Anxiety', avatar: null },
-      ]);
+      ];
+      setUsers(mockUsers);
     } finally {
       setLoading(false);
     }
@@ -73,12 +105,42 @@ const VolunteerDashboard = () => {
     setLoadingAssessments(true);
     try {
       const response = await axios.get(`http://localhost:8080/api/assessments/user/${userId}`);
-      setAssessments(response.data);
+      
+      // Transform the assessment data to match our frontend structure
+      const processedAssessments = response.data.map(assessment => {
+        // Parse the suggestions field if it exists and is a JSON string
+        let answers = [];
+        if (assessment.suggestions) {
+          try {
+            const suggestionsObj = JSON.parse(assessment.suggestions);
+            // Convert suggestions to answers format if possible
+            if (suggestionsObj.responses) {
+              answers = Object.entries(suggestionsObj.responses).map(([question, answer]) => ({
+                question,
+                answer: parseInt(answer) || 0
+              }));
+            }
+          } catch (e) {
+            console.error('Error parsing assessment suggestions:', e);
+          }
+        }
+        
+        return {
+          id: assessment.id,
+          assessmentType: assessment.assessmentType,
+          score: assessment.score,
+          riskLevel: assessment.riskLevel,
+          createdAt: assessment.createdAt,
+          followUpDate: assessment.followUpDate,
+          answers: answers
+        };
+      });
+      
+      setAssessments(processedAssessments);
     } catch (err) {
       console.error('Error fetching assessments:', err);
-      setError('Failed to load assessments');
       // For demo purposes, create some mock assessments
-      setAssessments([
+      const mockAssessments = [
         { 
           id: 1, 
           assessmentType: 'PHQ-9', 
@@ -115,7 +177,8 @@ const VolunteerDashboard = () => {
             { question: "Feeling afraid as if something awful might happen", answer: 1 }
           ]
         }
-      ]);
+      ];
+      setAssessments(mockAssessments);
     } finally {
       setLoadingAssessments(false);
     }
@@ -137,7 +200,7 @@ const VolunteerDashboard = () => {
   };
 
   const getRiskLevelClass = (riskLevel) => {
-    if (!riskLevel) return 'bg-gray-100 text-gray-800';
+    if (!riskLevel || riskLevel === 'No assessment') return 'bg-gray-100 text-gray-800';
     
     if (riskLevel.toLowerCase().includes('severe')) {
       return 'bg-red-100 text-red-800';
@@ -388,7 +451,9 @@ const VolunteerDashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-gray-500">Follow-ups Today</p>
-                <p className="text-2xl font-bold text-gray-900">2</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {assessments.filter(a => a.followUpDate === new Date().toISOString().split('T')[0]).length || 0}
+                </p>
               </div>
             </div>
           </div>
@@ -424,7 +489,7 @@ const VolunteerDashboard = () => {
                       placeholder="Search users..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg  text-black focus:outline-none focus:ring-2 focus:ring-teal-500"
                     />
                   </div>
                   
@@ -433,7 +498,7 @@ const VolunteerDashboard = () => {
                     <select
                       value={filterRisk}
                       onChange={(e) => setFilterRisk(e.target.value)}
-                      className="block w-full border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                      className="block w-full border-gray-200 rounded-lg text-sm text-black focus:outline-none focus:ring-2 focus:ring-teal-500"
                     >
                       <option value="all">All Risk Levels</option>
                       <option value="severe">Severe</option>
@@ -557,9 +622,9 @@ const VolunteerDashboard = () => {
                               <div className="flex justify-between items-center">
                                 <div className="flex items-center">
                                   <div className={`w-3 h-3 rounded-full mr-2 ${
-                                    assessment.riskLevel.toLowerCase().includes('severe') ? 'bg-red-500' :
-                                    assessment.riskLevel.toLowerCase().includes('moderate') ? 'bg-yellow-500' :
-                                    assessment.riskLevel.toLowerCase().includes('mild') ? 'bg-blue-500' :
+                                    assessment.riskLevel && assessment.riskLevel.toLowerCase().includes('severe') ? 'bg-red-500' :
+                                    assessment.riskLevel && assessment.riskLevel.toLowerCase().includes('moderate') ? 'bg-yellow-500' :
+                                    assessment.riskLevel && assessment.riskLevel.toLowerCase().includes('mild') ? 'bg-blue-500' :
                                     'bg-green-500'
                                   }`}></div>
                                   <h3 className="font-medium text-gray-900">{assessment.assessmentType} Assessment</h3>
@@ -588,14 +653,18 @@ const VolunteerDashboard = () => {
                               <div className="mt-4">
                                 <h4 className="font-medium text-gray-900 mb-2">Responses</h4>
                                 <div className="space-y-2">
-                                  {assessment.answers.map((answer, idx) => (
-                                    <div key={idx} className="flex justify-between items-center text-sm">
-                                      <span className="text-gray-700 flex-grow">{answer.question}</span>
-                                      <span className={`ml-4 px-2 py-1 rounded ${getAnswerColor(answer.answer)}`}>
-                                        {answer.answer}
-                                      </span>
-                                    </div>
-                                  ))}
+                                  {assessment.answers && assessment.answers.length > 0 ? (
+                                    assessment.answers.map((answer, idx) => (
+                                      <div key={idx} className="flex justify-between items-center text-sm">
+                                        <span className="text-gray-700 flex-grow">{answer.question}</span>
+                                        <span className={`ml-4 px-2 py-1 rounded ${getAnswerColor(answer.answer)}`}>
+                                          {answer.answer}
+                                        </span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className="text-gray-500">No detailed responses available</p>
+                                  )}
                                 </div>
                               </div>
                               

@@ -60,9 +60,7 @@ public class UserService {
         User savedUser = userRepository.save(user);
 
         // Initialize recommendations if provided
-        if (savedUser.getRecommendations() != null && !savedUser.getRecommendations().isBlank()) {
-            recommendationParserService.parseAndGenerateTasks(savedUser);
-        }
+       
 
         return savedUser;
     }

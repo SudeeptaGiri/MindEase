@@ -183,7 +183,9 @@ const Header = () => {
             >
               <FaPhoneAlt className="mr-1.5 h-4 w-4" />
               <span>Helpline</span>
+              
             </Link>
+{/*             
             <Link
               to="/resources"
               className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center ${
@@ -205,7 +207,7 @@ const Header = () => {
             >
               <FaQuestion className="mr-1.5 h-4 w-4" />
               <span>Help</span>
-            </Link>
+            </Link> */}
           </nav>
 
           {/* User Menu & Notifications */}

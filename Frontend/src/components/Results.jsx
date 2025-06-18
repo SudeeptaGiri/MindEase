@@ -772,7 +772,7 @@ END:VEVENT\n`;
                         ) : (
                           <>
                             <FaListAlt className="mr-2 h-5 w-5" />
-                            Add to Todo List
+                            Keep Going
                           </>
                         )}
                       </motion.button>
