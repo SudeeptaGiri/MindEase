@@ -23,7 +23,7 @@ import {
 } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyCQWnl79TrW3aY44m2gCtcn9lEEQbp_hBY';
+const GOOGLE_MAPS_API_KEY = 'AIzaSyDMrE97qHoHLMm4iZJ6YAqpwsLBzJ-Gams';
 
 // National emergency hotlines
 const NATIONAL_HOTLINES = [
