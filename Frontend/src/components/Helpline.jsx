@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaHospital, 
-  FaUserMd, 
-  FaAmbulance, 
-  FaExternalLinkAlt, 
-  FaClock, 
-  FaDirections, 
-  FaInfoCircle, 
-  FaExclamationTriangle, 
-  FaFilter, 
-  FaSearch, 
-  FaStar, 
-  FaStarHalfAlt, 
+import {
+  FaPhone,
+  FaMapMarkerAlt,
+  FaHospital,
+  FaUserMd,
+  FaAmbulance,
+  FaExternalLinkAlt,
+  FaClock,
+  FaDirections,
+  FaInfoCircle,
+  FaExclamationTriangle,
+  FaFilter,
+  FaSearch,
+  FaStar,
+  FaStarHalfAlt,
   FaRegStar,
   FaHeartbeat,
   FaPhoneVolume,
@@ -70,10 +70,10 @@ const Helpline = () => {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [markers, setMarkers] = useState([]);
   const [directionsRenderer, setDirectionsRenderer] = useState(null);
-  
+
   const fetchEmergencyContacts = (map, location) => {
     const service = new window.google.maps.places.PlacesService(map);
-    
+
     // Array of search queries for different types of emergency services
     const searchQueries = [
       { type: 'doctor', keyword: 'psychiatrist', icon: <FaUserMd className="text-indigo-500 text-lg" /> },
@@ -83,7 +83,7 @@ const Helpline = () => {
     ];
 
     setEmergencyContacts([]); // Clear previous results
-    
+
     const newMarkers = [];
 
     searchQueries.forEach(query => {
@@ -121,15 +121,15 @@ const Helpline = () => {
                       lng: place.geometry.location.lng()
                     },
                     distance: calculateDistance(
-                      location.lat, 
-                      location.lng, 
+                      location.lat,
+                      location.lng,
                       place.geometry.location.lat(),
                       place.geometry.location.lng()
                     )
                   };
-                  
+
                   setEmergencyContacts(prev => [...prev, newContact]);
-                  
+
                   // Create marker for this place
                   const marker = new window.google.maps.Marker({
                     map: map,
@@ -140,7 +140,7 @@ const Helpline = () => {
                       scaledSize: new window.google.maps.Size(30, 30)
                     }
                   });
-                  
+
                   const infoWindow = new window.google.maps.InfoWindow({
                     content: `
                       <div class="p-2">
@@ -151,13 +151,13 @@ const Helpline = () => {
                       </div>
                     `
                   });
-                  
+
                   marker.addListener("click", () => {
                     infoWindow.open(map, marker);
                     setSelectedPlace(newContact);
                     setShowDetails(true);
                   });
-                  
+
                   newMarkers.push(marker);
                 }
               }
@@ -166,7 +166,7 @@ const Helpline = () => {
         }
       });
     });
-    
+
     setMarkers(prevMarkers => {
       // Clear old markers from the map
       prevMarkers.forEach(marker => marker.setMap(null));
@@ -193,15 +193,15 @@ const Helpline = () => {
     const R = 6371; // Radius of the earth in km
     const dLat = deg2rad(lat2 - lat1);
     const dLon = deg2rad(lon2 - lon1);
-    const a = 
+    const a =
       Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2); 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+      Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     const d = R * c; // Distance in km
     return parseFloat(d.toFixed(1));
   };
-  
+
   const deg2rad = (deg) => {
     return deg * (Math.PI/180);
   };
@@ -226,21 +226,21 @@ const Helpline = () => {
       }
 
       const hospitals = await response.json();
-      
+
       // Calculate distance for each hospital
       const hospitalsWithDistance = hospitals.map(hospital => ({
         ...hospital,
         distance: calculateDistance(latitude, longitude, hospital.latitude, hospital.longitude)
       }));
-      
+
       setPlaces(hospitalsWithDistance);
-      
+
       if (map) {
         // Clear existing markers
         markers.forEach(marker => marker.setMap(null));
-        
+
         const newMarkers = [];
-        
+
         hospitalsWithDistance.forEach(hospital => {
           const marker = new window.google.maps.Marker({
             map: map,
@@ -261,15 +261,15 @@ const Helpline = () => {
               </div>
             `
           });
-          
+
           marker.addListener("click", () => {
             infoWindow.open(map, marker);
             setSelectedPlace(hospital);
           });
-          
+
           newMarkers.push(marker);
         });
-        
+
         setMarkers(newMarkers);
       }
     } catch (error) {
@@ -286,11 +286,11 @@ const Helpline = () => {
         initMap();
         return;
       }
-      
+
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
       script.async = true;
-      
+
       script.onload = () => {
         initMap();
       };
@@ -302,7 +302,7 @@ const Helpline = () => {
 
       document.head.appendChild(script);
     };
-    
+
     const initMap = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
@@ -311,7 +311,7 @@ const Helpline = () => {
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             };
-            
+
             setUserLocation(location);
 
             const mapInstance = new window.google.maps.Map(mapRef.current, {
@@ -345,7 +345,7 @@ const Helpline = () => {
                 scaledSize: new window.google.maps.Size(30, 30)
               }
             });
-            
+
             // Initialize directions renderer
             const directionsRendererInstance = new window.google.maps.DirectionsRenderer({
               map: mapInstance,
@@ -380,7 +380,7 @@ const Helpline = () => {
       markers.forEach(marker => marker && marker.setMap(null));
     };
   }, []);
-  
+
   // Effect to update map when filters change
   useEffect(() => {
     if (map && userLocation) {
@@ -391,9 +391,9 @@ const Helpline = () => {
 
   const getDirections = (destination) => {
     if (!map || !userLocation || !directionsRenderer) return;
-    
+
     const directionsService = new window.google.maps.DirectionsService();
-    
+
     directionsService.route(
       {
         origin: new window.google.maps.LatLng(userLocation.lat, userLocation.lng),
@@ -403,7 +403,7 @@ const Helpline = () => {
       (result, status) => {
         if (status === window.google.maps.DirectionsStatus.OK) {
           directionsRenderer.setDirections(result);
-          
+
           // Update the selected place with route information
           const route = result.routes[0].legs[0];
           setSelectedPlace(prev => ({
@@ -419,7 +419,7 @@ const Helpline = () => {
       }
     );
   };
-  
+
   const clearDirections = () => {
     if (directionsRenderer) {
       directionsRenderer.setDirections({ routes: [] });
@@ -433,29 +433,29 @@ const Helpline = () => {
   // Filter and sort emergency contacts
   const filteredContacts = useMemo(() => {
     let filtered = [...emergencyContacts];
-    
+
     // Apply category filter
     if (activeCategory !== 'all') {
       filtered = filtered.filter(contact => contact.type === activeCategory);
     }
-    
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(contact => 
-        contact.name.toLowerCase().includes(query) || 
+      filtered = filtered.filter(contact =>
+        contact.name.toLowerCase().includes(query) ||
         contact.address.toLowerCase().includes(query)
       );
     }
-    
+
     // Apply open now filter
     if (filters.open) {
       filtered = filtered.filter(contact => contact.isOpen);
     }
-    
+
     // Sort by distance
     filtered.sort((a, b) => a.distance - b.distance);
-    
+
     return filtered;
   }, [emergencyContacts, activeCategory, searchQuery, filters.open]);
 
@@ -474,12 +474,12 @@ const Helpline = () => {
   const categories = useMemo(() => {
     return ['all', ...new Set(emergencyContacts.map(contact => contact.type))];
   }, [emergencyContacts]);
-  
+
   const renderStarRating = (rating) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
     const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    
+
     return (
       <div className="flex items-center">
         {[...Array(fullStars)].map((_, i) => (
@@ -497,7 +497,7 @@ const Helpline = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-24 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -512,7 +512,7 @@ const Helpline = () => {
         </motion.div>
 
         {/* National Crisis Hotlines */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -524,10 +524,10 @@ const Helpline = () => {
               National Crisis Hotlines
             </h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {NATIONAL_HOTLINES.map((hotline, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 whileHover={{ scale: 1.02 }}
                 className="bg-white rounded-lg shadow-sm p-5 hover:shadow-md transition-all duration-300 border border-red-100"
@@ -549,7 +549,7 @@ const Helpline = () => {
                   {hotline.description}
                 </p>
                 {hotline.website && (
-                  <a 
+                  <a
                     href={hotline.website}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -590,7 +590,7 @@ const Helpline = () => {
         </div>
 
         {/* Filters and Search */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
@@ -612,7 +612,7 @@ const Helpline = () => {
               </button>
             ))}
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
             <div className="relative flex-grow">
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -624,7 +624,7 @@ const Helpline = () => {
                 className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 text-sm text-black"
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setFilters(prev => ({ ...prev, open: !prev.open }))}
@@ -637,7 +637,7 @@ const Helpline = () => {
                 <FaClock className="mr-1" />
                 Open Now
               </button>
-              
+
               <div className="flex items-center space-x-2">
                 <label htmlFor="distance" className="text-xs font-medium text-gray-700 whitespace-nowrap">
                   Max {filters.maxDistance} km
@@ -658,7 +658,7 @@ const Helpline = () => {
 
         {activeTab === 'map' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -686,7 +686,7 @@ const Helpline = () => {
                 </div>
               )}
               <div ref={mapRef} className="h-[600px] w-full" />
-              
+
               <div className="absolute bottom-4 left-4 z-10">
                 <div className="bg-white p-3 rounded-lg shadow-md">
                   <div className="text-sm font-medium mb-2">Map Legend</div>
@@ -712,7 +712,7 @@ const Helpline = () => {
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
@@ -727,7 +727,7 @@ const Helpline = () => {
                   {filteredContacts.length} found
                 </span>
               </div>
-              
+
               {loading && filteredContacts.length === 0 ? (
                 <div className="flex-grow flex flex-col items-center justify-center p-6">
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-500 mb-4"></div>
@@ -754,7 +754,7 @@ const Helpline = () => {
                         onClick={() => {
                           setSelectedPlace(contact);
                           setShowDetails(true);
-                          
+
                           // Center map on this location
                           if (map && contact.location) {
                             map.setCenter(contact.location);
@@ -764,9 +764,9 @@ const Helpline = () => {
                       >
                         <div className="flex items-start">
                           {contact.photo ? (
-                            <img 
-                              src={contact.photo} 
-                              alt={contact.name} 
+                            <img
+                              src={contact.photo}
+                              alt={contact.name}
                               className="w-16 h-16 object-cover rounded-lg mr-3"
                             />
                           ) : (
@@ -774,7 +774,7 @@ const Helpline = () => {
                               {contact.icon || <FaHospital className="text-gray-400 text-xl" />}
                             </div>
                           )}
-                          
+
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between">
                               <h4 className="font-medium text-gray-900 text-sm mb-1 truncate pr-2">{contact.name}</h4>
@@ -782,22 +782,22 @@ const Helpline = () => {
                                 {contact.distance} km
                               </span>
                             </div>
-                            
+
                             {contact.rating > 0 && (
                               <div className="mb-1">
                                 {renderStarRating(contact.rating)}
                               </div>
                             )}
-                            
+
                             <p className="text-xs text-gray-600 mb-1 truncate">
                               <FaMapMarkerAlt className="inline mr-1 text-gray-400" />
                               {contact.address}
                             </p>
-                            
+
                             <div className="flex items-center mt-1">
                               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                contact.isOpen 
-                                  ? 'bg-green-100 text-green-800' 
+                                contact.isOpen
+                                  ? 'bg-green-100 text-green-800'
                                   : 'bg-red-100 text-red-800'
                               }`}>
                                 {contact.isOpen ? 'Open Now' : 'Closed'}
@@ -817,7 +817,7 @@ const Helpline = () => {
           </div>
         ) : (
           // List View
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
@@ -851,9 +851,9 @@ const Helpline = () => {
                 >
                   {contact.photo ? (
                     <div className="h-40 w-full overflow-hidden">
-                      <img 
-                        src={contact.photo} 
-                        alt={contact.name} 
+                      <img
+                        src={contact.photo}
+                        alt={contact.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -864,7 +864,7 @@ const Helpline = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="p-5">
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-semibold text-gray-900 truncate">{contact.name}</h4>
@@ -872,22 +872,22 @@ const Helpline = () => {
                         {contact.distance} km
                       </span>
                     </div>
-                    
+
                     {contact.rating > 0 && (
                       <div className="mb-2">
                         {renderStarRating(contact.rating)}
                       </div>
                     )}
-                    
+
                     <p className="text-sm text-gray-600 mb-3">
                       <FaMapMarkerAlt className="inline mr-1 text-gray-500" />
                       {contact.address}
                     </p>
-                    
+
                     <div className="flex items-center justify-between mb-3">
                       <span className={`text-xs px-2 py-1 rounded-full ${
-                        contact.isOpen 
-                          ? 'bg-green-100 text-green-800' 
+                        contact.isOpen
+                          ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
                         {contact.isOpen ? 'Open Now' : 'Closed'}
@@ -896,7 +896,7 @@ const Helpline = () => {
                         {contact.type}
                       </span>
                     </div>
-                    
+
                     <div className="flex flex-col space-y-2">
                       {contact.phone && (
                         <a
@@ -907,9 +907,9 @@ const Helpline = () => {
                           {contact.phone}
                         </a>
                       )}
-                      
+
                       {contact.website && (
-                        <a 
+                        <a
                           href={contact.website}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -919,7 +919,7 @@ const Helpline = () => {
                         </a>
                       )}
                     </div>
-                    
+
                     <div className="mt-4 flex space-x-2">
                       <button
                         onClick={(e) => {
@@ -932,7 +932,7 @@ const Helpline = () => {
                       >
                         <FaDirections className="mr-1" /> Directions
                       </button>
-                      
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -956,7 +956,7 @@ const Helpline = () => {
         {/* Details Slide-in Panel */}
         <AnimatePresence>
           {selectedPlace && showDetails && (
-            <motion.div 
+            <motion.div
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -966,7 +966,7 @@ const Helpline = () => {
               <div className="p-6">
                 <div className="flex justify-between items-start mb-6">
                   <h3 className="text-xl font-semibold text-gray-900">Resource Details</h3>
-                  <button 
+                  <button
                     onClick={() => setShowDetails(false)}
                     className="text-gray-400 hover:text-gray-500 focus:outline-none"
                   >
@@ -976,12 +976,12 @@ const Helpline = () => {
                     </svg>
                   </button>
                 </div>
-                
+
                 {selectedPlace.photo ? (
                   <div className="w-full h-48 rounded-lg overflow-hidden mb-6">
-                    <img 
-                      src={selectedPlace.photo} 
-                      alt={selectedPlace.name} 
+                    <img
+                      src={selectedPlace.photo}
+                      alt={selectedPlace.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -992,7 +992,7 @@ const Helpline = () => {
                     </div>
                   </div>
                 )}
-                
+
                 <div className="mb-6">
                   <h4 className="font-semibold text-gray-900 text-lg mb-1">{selectedPlace.name}</h4>
                   {selectedPlace.rating > 0 && (
@@ -1002,8 +1002,8 @@ const Helpline = () => {
                   )}
                   <div className="flex items-center space-x-2 mb-2">
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      selectedPlace.isOpen 
-                        ? 'bg-green-100 text-green-800' 
+                      selectedPlace.isOpen
+                        ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
                       {selectedPlace.isOpen ? 'Open Now' : 'Closed'}
@@ -1013,7 +1013,7 @@ const Helpline = () => {
                     </span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4 mb-6">
                   <div className="flex items-start">
                     <FaMapMarkerAlt className="text-teal-600 mt-1 mr-3" />
@@ -1023,7 +1023,7 @@ const Helpline = () => {
                       <p className="text-xs text-teal-600 mt-1">{selectedPlace.distance} km from your location</p>
                     </div>
                   </div>
-                  
+
                   {selectedPlace.phone && (
                     <div className="flex items-start">
                       <FaPhone className="text-teal-600 mt-1 mr-3" />
@@ -1038,7 +1038,7 @@ const Helpline = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedPlace.website && (
                     <div className="flex items-start">
                       <FaExternalLinkAlt className="text-teal-600 mt-1 mr-3" />
@@ -1055,7 +1055,7 @@ const Helpline = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {selectedPlace.routeInfo && (
                     <div className="flex items-start">
                       <FaDirections className="text-teal-600 mt-1 mr-3" />
@@ -1069,7 +1069,7 @@ const Helpline = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="space-y-3">
                   <button
                     onClick={() => {
@@ -1083,7 +1083,7 @@ const Helpline = () => {
                   >
                     <FaDirections className="mr-2" /> Get Directions
                   </button>
-                  
+
                   {selectedPlace.phone && (
                     <a
                       href={`tel:${selectedPlace.phone.replace(/\D/g,'')}`}
@@ -1092,7 +1092,7 @@ const Helpline = () => {
                       <FaPhone className="mr-2" /> Call Now
                     </a>
                   )}
-                  
+
                   {selectedPlace.website && (
                     <a
                       href={selectedPlace.website}
@@ -1108,11 +1108,11 @@ const Helpline = () => {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         {/* Overlay for slide-in panel */}
         <AnimatePresence>
           {selectedPlace && showDetails && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.5 }}
               exit={{ opacity: 0 }}
@@ -1122,7 +1122,7 @@ const Helpline = () => {
           )}
         </AnimatePresence>
       </div>
-      
+
       <Tooltip id="details-tooltip" />
     </div>
   );
