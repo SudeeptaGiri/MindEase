@@ -779,18 +779,7 @@ const Dashboard = () => {
                         <FaArrowRight className="h-4 w-4" />
                       </button>
                       
-                      <button 
-                        onClick={() => navigate('/chat')}
-                        className="w-full flex items-center justify-between p-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors"
-                      >
-                        <div className="flex items-center">
-                          <div className="p-2 bg-indigo-100 rounded-lg mr-3">
-                            <FaUsers className="h-4 w-4 text-indigo-600" />
-                          </div>
-                          <span>Connect with Support</span>
-                        </div>
-                        <FaArrowRight className="h-4 w-4" />
-                      </button>
+                     
                     </div>
                     
                     {latestAssessment && (

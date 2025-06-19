@@ -20,6 +20,7 @@ import './styles/App.css';
 
 // Subtle background patterns
 import BackgroundPattern from './components/ui/BackgroundPattern';
+import WellnessResources from './components/WellnessResources';
 
 
 const App = () => {
@@ -96,6 +97,7 @@ const AppContent = () => {
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
               <Route path="/volunteer-dashboard" element={<VolunteerDashboard />} />
               <Route path="/assessment-history" element={<AssessmentHistory />} />
+              <Route path='resources' element={<WellnessResources/>} />
               {/* Add more routes as needed */}
             </Routes>
           </motion.div>
