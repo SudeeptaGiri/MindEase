@@ -361,14 +361,15 @@ const AdminDashboard = () => {
                   <select
                     value={filterBy}
                     onChange={(e) => setFilterBy(e.target.value)}
-                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg"
+                    className="block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-lg text-gray-800 bg-white"
                   >
-                    <option value="all">All Volunteers</option>
-                    <option value="specialization">With Specialization</option>
-                    <option value="experience">Experienced (2+ years)</option>
+                    <option value="all" className="text-gray-800">All Volunteers</option>
+                    <option value="specialization" className="text-gray-800">With Specialization</option>
+                    <option value="experience" className="text-gray-800">Experienced (2+ years)</option>
                   </select>
                 </div>
               </div>
+
             </div>
           </div>
 
@@ -685,17 +686,17 @@ const AdminDashboard = () => {
                       <div className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-500">Full Name</p>
-                          <p className="font-medium">{selectedVolunteer.fullName}</p>
+                          <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.fullName}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Username</p>
-                          <p className="font-medium">{selectedVolunteer.username}</p>
+                          <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.username}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Email</p>
                           <div className="flex items-center">
                             <FaEnvelope className="text-gray-400 mr-2" />
-                            <p className="font-medium">{selectedVolunteer.email}</p>
+                            <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.email}</p>
                           </div>
                         </div>
                       </div>
@@ -707,17 +708,17 @@ const AdminDashboard = () => {
                       <div className="space-y-3">
                         <div>
                           <p className="text-sm text-gray-500">Credentials</p>
-                          <p className="font-medium">{selectedVolunteer.credentials || 'N/A'}</p>
+                          <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.credentials || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Specialization</p>
-                          <p className="font-medium">{selectedVolunteer.specialization || 'N/A'}</p>
+                          <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.specialization || 'N/A'}</p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Experience</p>
                           <div className="flex items-center">
                             <FaClock className="text-gray-400 mr-2" />
-                            <p className="font-medium">{selectedVolunteer.experience || '0'} years</p>
+                            <p className="ml-2 font-medium text-gray-600">{selectedVolunteer.experience || '0'} years</p>
                           </div>
                         </div>
                       </div>
@@ -852,26 +853,27 @@ const AdminDashboard = () => {
                       <li className="flex items-start">
                         <FaIdCard className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
                         <div>
-                          <span className="text-sm text-gray-500">Name:</span>
-                          <span className="ml-1 font-medium">{selectedVolunteer.fullName}</span>
+                          <span className="text-sm text-gray-600">Name:</span>
+                          <span className="ml-1 font-medium text-gray-800">{selectedVolunteer.fullName}</span>
                         </div>
                       </li>
                       <li className="flex items-start">
                         <FaGraduationCap className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
                         <div>
-                          <span className="text-sm text-gray-500">Credentials:</span>
-                          <span className="ml-1 font-medium">{selectedVolunteer.credentials || 'N/A'}</span>
+                          <span className="text-sm text-gray-600">Credentials:</span>
+                          <span className="ml-1 font-medium text-gray-800">{selectedVolunteer.credentials || 'N/A'}</span>
                         </div>
                       </li>
                       <li className="flex items-start">
                         <FaBriefcase className="h-5 w-5 text-gray-400 mr-2 mt-0.5" />
                         <div>
-                          <span className="text-sm text-gray-500">Experience:</span>
-                          <span className="ml-1 font-medium">{selectedVolunteer.experience || '0'} years</span>
+                          <span className="text-sm text-gray-600">Experience:</span>
+                          <span className="ml-1 font-medium text-gray-800">{selectedVolunteer.experience || '0'} years</span>
                         </div>
                       </li>
                     </ul>
                   </div>
+
                   
                   <div className="flex justify-end">
                     <button

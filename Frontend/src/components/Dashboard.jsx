@@ -243,6 +243,7 @@ const Dashboard = () => {
             )}
           </div>
 
+
           {/* Progress bar */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
@@ -765,7 +766,7 @@ const Dashboard = () => {
                         </div>
                         <FaArrowRight className="h-4 w-4" />
                       </button>
-                      
+
                       <button 
                         onClick={() => navigate('/resources')}
                         className="w-full flex items-center justify-between p-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors"
@@ -778,8 +779,6 @@ const Dashboard = () => {
                         </div>
                         <FaArrowRight className="h-4 w-4" />
                       </button>
-                      
-                     
                     </div>
                     
                     {latestAssessment && (
