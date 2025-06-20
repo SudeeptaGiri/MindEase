@@ -590,10 +590,10 @@ const VolunteerDashboard = () => {
                         </div>
                       </div>
                       <div className="ml-auto">
-                        <button className="bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-lg flex items-center transition-colors">
-                          <FaCommentDots className="mr-2" />
-                          Message
-                        </button>
+{/*                         <button className="bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-lg flex items-center transition-colors"> */}
+{/*                           <FaCommentDots className="mr-2" /> */}
+{/*                           Message */}
+{/*                         </button> */}
                       </div>
                     </div>
                   </div>
@@ -663,20 +663,20 @@ const VolunteerDashboard = () => {
                                       </div>
                                     ))
                                   ) : (
-                                    <p className="text-gray-500">No detailed responses available</p>
+                                    <p className="text-gray-500">Confidential</p>
                                   )}
                                 </div>
                               </div>
                               
                               <div className="mt-6 flex justify-between">
-                                <button className="text-teal-600 hover:text-teal-800 flex items-center text-sm">
-                                  <FaChartLine className="mr-1" />
-                                  View Detailed Report
-                                </button>
-                                <button className="bg-teal-100 text-teal-800 hover:bg-teal-200 px-4 py-2 rounded-lg text-sm flex items-center transition-colors">
-                                  <FaCalendarAlt className="mr-2" />
-                                  Schedule Follow-up
-                                </button>
+{/*                                 <button className="text-teal-600 hover:text-teal-800 flex items-center text-sm"> */}
+{/*                                   <FaChartLine className="mr-1" /> */}
+{/*                                   View Detailed Report */}
+{/*                                 </button> */}
+{/*                                 <button className="bg-teal-100 text-teal-800 hover:bg-teal-200 px-4 py-2 rounded-lg text-sm flex items-center transition-colors"> */}
+{/*                                   <FaCalendarAlt className="mr-2" /> */}
+{/*                                   Schedule Follow-up */}
+{/*                                 </button> */}
                               </div>
                             </div>
                           </div>

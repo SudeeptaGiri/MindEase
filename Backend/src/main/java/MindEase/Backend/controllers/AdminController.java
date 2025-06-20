@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
 @CrossOrigin(origins = "http://localhost:5173")
+
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController {
@@ -54,6 +55,7 @@ public class AdminController {
     @PostMapping("/create")
     public ResponseEntity<?> createAdmin(@RequestBody Admin admin) {
         try {
+            System.out.println("Admin Payload: " + admin); // debug log
             Admin createdAdmin = adminService.createAdmin(admin);
             return ResponseEntity.ok(Map.of(
                     "message", "Admin created successfully",
@@ -65,4 +67,5 @@ public class AdminController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
 }
