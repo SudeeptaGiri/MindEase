@@ -29,27 +29,24 @@ public class AdminController {
         try {
             if (username == null || password == null) {
                 return ResponseEntity.badRequest()
-                    .body(Map.of("error", "Username and password are required"));
+                        .body(Map.of("error", "Username and password are required"));
             }
 
             Admin admin = adminService.loginAdmin(username, password);
 
             return ResponseEntity.ok(Map.of(
-                "message", "Login successful",
-                "admin", Map.of(
-                    "id", admin.getId(),
-                    "username", admin.getUsername(),
-                    "fullName", admin.getFullName(),
-                    "email", admin.getEmail(),
-                    "role", "ADMIN"
-                )
-            ));
+                    "message", "Login successful",
+                    "admin", Map.of(
+                            "id", admin.getId(),
+                            "username", admin.getUsername(),
+                            "email", admin.getEmail(),
+                            "role", "ADMIN")));
         } catch (AuthenticationException e) {
             return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.internalServerError()
-                .body(Map.of("error", "An unexpected error occurred"));
+                    .body(Map.of("error", "An unexpected error occurred"));
         }
     }
 
@@ -59,15 +56,13 @@ public class AdminController {
         try {
             Admin createdAdmin = adminService.createAdmin(admin);
             return ResponseEntity.ok(Map.of(
-                "message", "Admin created successfully",
-                "admin", Map.of(
-                    "id", createdAdmin.getId(),
-                    "username", createdAdmin.getUsername()
-                )
-            ));
+                    "message", "Admin created successfully",
+                    "admin", Map.of(
+                            "id", createdAdmin.getId(),
+                            "username", createdAdmin.getUsername())));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
-                .body(Map.of("error", e.getMessage()));
+                    .body(Map.of("error", e.getMessage()));
         }
     }
 }
