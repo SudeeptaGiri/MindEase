@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { gsap } from 'gsap';
+import environment from '../utils/environment';
 
 const Assessment = () => {
   const [assessmentType, setAssessmentType] = useState('');
@@ -155,7 +156,7 @@ const Assessment = () => {
       followUpDate.setDate(followUpDate.getDate() + 14);
 
       // Generate AI suggestions
-      const API_KEY = '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';
+      const API_KEY = environment.PUBLIC_API_KEY;
       const prompt = `You are a mental health professional creating a wellness plan.
        Based on a ${assessmentType} assessment with a score of ${totalScore} indicating ${riskLevel}, create a structured wellness plan.
         Respond with ONLY a JSON object in this exact format, without any markdown or additional text:

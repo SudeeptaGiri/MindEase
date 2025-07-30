@@ -22,8 +22,9 @@ import {
   FaListAlt
 } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
+import environment from '../utils/environment';
 
-const GOOGLE_MAPS_API_KEY = 'AIzaSyDMrE97qHoHLMm4iZJ6YAqpwsLBzJ-Gams';
+const GOOGLE_MAPS_API_KEY = environment.GOOGLE_MAPS_API_KEY;
 
 // National emergency hotlines
 const NATIONAL_HOTLINES = [
