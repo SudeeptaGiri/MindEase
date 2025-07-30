@@ -1,6 +1,5 @@
 package MindEase.Backend.nearesthospitals;
 
-
 import com.google.maps.GeoApiContext;
 import com.google.maps.PlacesApi;
 import com.google.maps.model.LatLng;
@@ -23,7 +22,7 @@ public class HospitalService {
     public void init() {
         // Initialize the Google Maps API context
         context = new GeoApiContext.Builder()
-                .apiKey("AIzaSyCQWnl79TrW3aY44m2gCtcn9lEEQbp_hBY")
+                .apiKey("GOOGLE_MAPS_API_KEY") // Replace with your actual Google Maps API key
                 .build();
     }
 
@@ -48,7 +47,6 @@ public class HospitalService {
                 result.name,
                 result.geometry.location.lat,
                 result.geometry.location.lng,
-                result.vicinity
-        );
+                result.vicinity);
     }
 }
